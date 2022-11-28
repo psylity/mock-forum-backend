@@ -1,11 +1,15 @@
 import flask
-from flask import Flask, jsonify, request, session
+from flask import Flask, jsonify, request, session, abort
 import sqlite3
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
 
-app = Flask(__name__)
+app = Flask(__name__,
+            static_url_path='/static/',
+            static_folder='static',
+            )
 app.secret_key = "HELLO, IT IS A BIG SECRET"
 
 
@@ -31,7 +35,7 @@ def get_cursor():
 
 @app.route("/")
 def send_default():
-    return flask.send_file('html/index.html')
+    return flask.send_file('static/index.html')
 
 
 @app.route("/users/", methods=["POST"])

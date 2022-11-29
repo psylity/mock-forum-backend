@@ -40,12 +40,12 @@ def send_default():
 
 @app.route("/users/", methods=["POST"])
 def create_user():
-    db = get_db()
     login = request.form.get("login")
     password = request.form.get("password")
     if login is None or password is None or login.strip() == "" or password.strip() == "":
         return jsonify({"result": "error", "message": "invalid login or password"}), 422
 
+    db = get_db()
     cursor = db.cursor()
     cursor.execute("SELECT login FROM users WHERE login=?", (login,))
     result = cursor.fetchone()
@@ -67,7 +67,10 @@ def create_user():
 @app.route("/users/me")
 @login_required
 def userinfo(login):
-    return jsonify(session["user"])
+    return jsonify({
+        "result": "ok",
+        "user": session["user"],
+    })
 
 
 @app.route("/users/<user_id>")
@@ -79,10 +82,13 @@ def get_user(user_id):
     if result is None:
         return jsonify({"result": "error", "message": "user not found"}), 404
 
-    return jsonify({"result": "ok", "user": {
-        "id": result[0],
-        "login": result[1],
-    }})
+    return jsonify({
+        "result": "ok",
+        "user": {
+            "id": result[0],
+            "login": result[1],
+        }
+    })
 
 
 def get_users(user_ids):
@@ -112,17 +118,26 @@ def login():
     if not result or not check_password_hash(result[2], password):
         return jsonify({"result": "error", "message": "invalid login or password"}), 401
 
-    session["user"] = {
+    user = {
         "id": result[0],
         "login": result[1],
     }
-    return jsonify({"result": "ok", "message": "user authorized"})
+
+    session["user"] = user
+    return jsonify({
+        "result": "ok",
+        "message": "user authorized",
+        "user": user,
+    })
 
 
 @app.route("/logout")
 def logout():
     session["user"] = None
-    return jsonify({"result": "ok", "message": "logged out"})
+    return jsonify({
+        "result": "ok",
+        "message": "logged out"
+    })
 
 
 @app.route("/threads/")
@@ -142,7 +157,12 @@ def list_threads():
         })
         if r[1] not in user_ids:
             user_ids.append(r[1])
-    return jsonify({"result": "ok", "threads": threads, "users": get_users(user_ids)})
+
+    return jsonify({
+        "result": "ok",
+        "threads": threads,
+        "users": get_users(user_ids)
+    })
 
 
 @app.route("/threads/", methods=["POST"])
@@ -211,7 +231,7 @@ def get_thread(thread_id):
 
 @app.route("/posts/", methods=["POST"])
 @login_required
-def create_post(login):
+def create_post(lomgin):
     thread_id = request.form.get("thread_id")
     text = request.form.get("text")
     if text is None or text.strip() == "":

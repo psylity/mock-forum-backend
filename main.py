@@ -231,7 +231,7 @@ def get_thread(thread_id):
 
 @app.route("/posts/", methods=["POST"])
 @login_required
-def create_post(lomgin):
+def create_post(login):
     thread_id = request.form.get("thread_id")
     text = request.form.get("text")
     if text is None or text.strip() == "":
